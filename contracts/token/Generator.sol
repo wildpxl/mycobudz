@@ -6,13 +6,15 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./Erc20.sol";
 import "./PoolCreatableErc20i.sol";
 import "./Generator.sol";
+import "./MushroomGifStorage.sol";
 
 contract MushroomGenerator is Generator {
     using Strings for uint;
 
     struct MushroomData {
         uint lvl;
-        string background;
+        string background; // For static backgrounds
+        string gifBackground; // For GIF backgrounds
         string capShadows;
         string capMidtones;
         string capHighlights;
@@ -26,13 +28,28 @@ contract MushroomGenerator is Generator {
 
     uint constant MAX_TRAITS = 4;
 
-    // Updated to accept external color palettes
+    // Updated palettes
     string[4] public capPalette = ["#5a5353", "#3c2420", "#694335", "#784a39"];
     string[4] public bodyPalette = ["#a38070", "#966c57", "#5a3826", "#69442e"];
     string[4] public ridgesPalette = ["#a58258", "#e1d6c7", "#f0e5d4", "#c3baac"];
     string[4] public gillsPalette = ["#333333", "#515151", "#6a6a6a", "#3e6253"];
+    string[5] public levelOneBackgrounds = ["#f5f5f5", "#e4ded4", "#bcbcbc", "#ece8e1", "#dcd6cd"];
+
+    MushroomGifStorage public gifStorage;
+
+    constructor(address gifStorageAddress) {
+        gifStorage = MushroomGifStorage(gifStorageAddress);
+    }
 
     function setColors(MushroomData memory data, Rand memory rnd) private view {
+        if (data.lvl == 1) {
+            data.background = levelOneBackgrounds[rnd.next() % levelOneBackgrounds.length];
+        } else if (data.lvl == 2) {
+            data.gifBackground = gifStorage.levelTwoGifBackground();
+        } else {
+            data.background = "#ffffff"; // Default background for other levels
+        }
+
         data.capShadows = capPalette[rnd.next() % capPalette.length];
         data.capMidtones = capPalette[rnd.next() % capPalette.length];
         data.capHighlights = capPalette[rnd.next() % capPalette.length];
@@ -62,6 +79,23 @@ contract MushroomGenerator is Generator {
         MushroomData memory data = this.getMushroom(seed_data);
         string memory svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>";
 
+        // Add the background logic
+        if (data.lvl == 2) {
+            svg = string(
+                abi.encodePacked(
+                    svg,
+                    "<image href='", data.gifBackground, "' width='64' height='64'/>"
+                )
+            );
+        } else {
+            svg = string(
+                abi.encodePacked(
+                    svg,
+                    "<rect width='64' height='64' fill='", data.background, "' />"
+                )
+            );
+        }
+
         svg = string(
             abi.encodePacked(
                 svg,
@@ -78,17 +112,14 @@ contract MushroomGenerator is Generator {
     }
 
     function capLayerSvg(string memory shadows, string memory midtones, string memory highlights) private view returns (string memory) {
-        // Replace with your external SVG components
         return string(abi.encodePacked("<circle cx='32' cy='32' r='16' fill='", shadows, "' />"));
     }
 
     function bodySvg(string memory bodyColor) private view returns (string memory) {
-        // Replace with your external SVG components
         return string(abi.encodePacked("<rect x='26' y='40' width='12' height='20' fill='", bodyColor, "' />"));
     }
 
     function spotsSvg(string memory spotsColor) private view returns (string memory) {
-        // Replace with your external SVG components
         return string(
             abi.encodePacked(
                 "<circle cx='28' cy='30' r='2' fill='", spotsColor, "' />",
@@ -98,14 +129,12 @@ contract MushroomGenerator is Generator {
     }
 
     function ridgesSvg(string memory ridgesColor) private view returns (string memory) {
-        // Replace with your external SVG components
         return string(
             abi.encodePacked("<line x1='26' y1='42' x2='38' y2='42' stroke='", ridgesColor, "' stroke-width='2' />")
         );
     }
 
     function gillsSvg(string memory gillsColor) private view returns (string memory) {
-        // Replace with your external SVG components
         return string(abi.encodePacked("<path d='M20 40 L44 40 L32 56 Z' fill='", gillsColor, "' />"));
     }
 }
