@@ -2,49 +2,64 @@
 pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./Erc20.sol";
 import "./PoolCreatableErc20i.sol";
 import "./Generator.sol";
+
+// MushroomGenerator.sol
 
 contract MushroomGenerator is Generator {
     using Strings for uint;
 
     struct MushroomData {
         uint lvl;
-        string background;      // Background color
-        string capShadows;      // Shadow for Cap
-        string capMidtones;     // Midtone for Cap
-        string capHighlights;   // Highlight for Cap
-        string bodyColor;       // Body color
-        string spotsColor;      // Spots color
-        string ridgesColor;     // Ridges color
-        string gillsColor;      // Gills color
-        uint[4] traits;         // Strength, Dexterity, Luck, Wisdom
-        bool[4] hasAccessories; // Accessory flags for each trait
+        string background;
+        string capShadows;
+        string capMidtones;
+        string capHighlights;
+        string bodyColor;
+        string spotsColor;
+        string ridgesColor;
+        string gillsColor;
+        uint[4] traits;
+        bool[4] hasAccessories;
     }
 
     uint constant MAX_TRAITS = 4;
 
-    // Assign colors based on Grey Palette
     function setColors(MushroomData memory data, Rand memory rnd) private pure {
-        // Assign colors for each part based on your grey palette
-        data.capShadows = selectColor(rnd, ["#2f2f2f", "#484848"]);
-        data.capMidtones = selectColor(rnd, ["#515151", "#6a6a6a"]);
-        data.capHighlights = "#888888"; // Fixed highlight color
-        data.bodyColor = selectColor(rnd, ["#737373", "#959595", "#bbbbbb"]);
-        data.spotsColor = "#eaeaea"; // Fixed highlight for spots
-        data.ridgesColor = selectColor(rnd, ["#737373", "#959595", "#bbbbbb"]);
-        data.gillsColor = selectColor(rnd, ["#333333", "#515151"]);
+        // Cap colors
+        data.capShadows = selectColor(rnd, ["#5a5353", "#3c2420", "#694335", "#784a39"]); // Darker tones
+        data.capMidtones = selectColor(rnd, ["#a0938e", "#9e6851", "#b47d66", "#cb977f"]); // Medium tones
+        data.capHighlights = selectColor(rnd, ["#e1ae96", "#f0e5d4", "#cfc6b8"]);         // Lighter tones
+
+        // Body colors
+        data.bodyColor = selectColor(rnd, ["#a38070", "#966c57", "#5a3826", "#69442e"]);
+
+        // Spots color (fixed as per your specification)
+        data.spotsColor = "#eaeaea";
+
+        // Ridges colors
+        data.ridgesColor = selectColor(rnd, ["#a58258", "#e1d6c7", "#f0e5d4", "#c3baac"]);
+
+        // Gills colors
+        data.gillsColor = selectColor(rnd, ["#333333", "#515151", "#6a6a6a", "#3e6253"]);
     }
 
-    // Randomly select a color from a palette
     function selectColor(Rand memory rnd, string[] memory colors) private pure returns (string memory) {
         uint index = rnd.next() % colors.length;
         return colors[index];
     }
 
-    // Get Mushroom with color and accessory logic
-    function getMushroom(SeedData calldata seed_data) external view returns (MushroomData memory) {
+    function setTraits(MushroomData memory data, Rand memory rnd) private pure {
+        for (uint i = 0; i < MAX_TRAITS; i++) {
+            data.traits[i] = rnd.next() % 10;
+            data.hasAccessories[i] = rnd.next() % 2 == 0;
+        }
+    }
+
+    function getMushroom(SeedData calldata seed_data) external pure returns (MushroomData memory) {
         Rand memory rnd = Rand(seed_data.seed, 0, seed_data.extra);
         MushroomData memory data;
         data.lvl = rnd.lvl();
@@ -53,59 +68,43 @@ contract MushroomGenerator is Generator {
         return data;
     }
 
-    // Generate the SVG with layers for highlights, midtones, and shadows
-    function getSvg(SeedData calldata seed_data) external view returns (string memory) {
+    function getSvg(SeedData calldata seed_data) external pure returns (string memory) {
         MushroomData memory data = this.getMushroom(seed_data);
         string memory svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>";
 
-        // Add cap layers
         svg = string(
             abi.encodePacked(
                 svg,
-                capLayerSvg(data.capShadows, data.capMidtones, data.capHighlights)
+                capLayerSvg(data.capShadows, data.capMidtones, data.capHighlights),
+                bodySvg(data.bodyColor),
+                spotsSvg(data.spotsColor),
+                ridgesSvg(data.ridgesColor),
+                gillsSvg(data.gillsColor),
+                traitsSvg(data),
+                accessoriesSvg(data),
+                "</svg>"
             )
         );
 
-        // Add body
-        svg = string(abi.encodePacked(svg, bodySvg(data.bodyColor)));
-
-        // Add spots and ridges
-        svg = string(abi.encodePacked(svg, spotsSvg(data.spotsColor)));
-        svg = string(abi.encodePacked(svg, ridgesSvg(data.ridgesColor)));
-
-        // Add gills
-        svg = string(abi.encodePacked(svg, gillsSvg(data.gillsColor)));
-
-        // Add traits and accessories
-        svg = string(abi.encodePacked(svg, traitsSvg(data)));
-        svg = string(abi.encodePacked(svg, accessoriesSvg(data)));
-
-        return string(abi.encodePacked(svg, "</svg>"));
+        return svg;
     }
 
-    // SVG Layer for Cap
-    function capLayerSvg(
-        string memory shadows,
-        string memory midtones,
-        string memory highlights
-    ) private pure returns (string memory) {
+    function capLayerSvg(string memory shadows, string memory midtones, string memory highlights) private pure returns (string memory) {
         return string(
             abi.encodePacked(
-                "<circle cx='32' cy='32' r='16' fill='", shadows, "' />", // Shadows
-                "<circle cx='32' cy='32' r='12' fill='", midtones, "' />", // Midtones
-                "<circle cx='32' cy='32' r='8' fill='", highlights, "' />"  // Highlights
+                "<circle cx='32' cy='32' r='16' fill='", shadows, "' />",
+                "<circle cx='32' cy='32' r='12' fill='", midtones, "' />",
+                "<circle cx='32' cy='32' r='8' fill='", highlights, "' />"
             )
         );
     }
 
-    // SVG for Body
     function bodySvg(string memory bodyColor) private pure returns (string memory) {
         return string(
             abi.encodePacked("<rect x='26' y='40' width='12' height='20' fill='", bodyColor, "' />")
         );
     }
 
-    // SVG for Spots
     function spotsSvg(string memory spotsColor) private pure returns (string memory) {
         return string(
             abi.encodePacked(
@@ -115,7 +114,6 @@ contract MushroomGenerator is Generator {
         );
     }
 
-    // SVG for Ridges
     function ridgesSvg(string memory ridgesColor) private pure returns (string memory) {
         return string(
             abi.encodePacked(
@@ -124,16 +122,12 @@ contract MushroomGenerator is Generator {
         );
     }
 
-    // SVG for Gills
     function gillsSvg(string memory gillsColor) private pure returns (string memory) {
         return string(
-            abi.encodePacked(
-                "<path d='M20 40 L44 40 L32 56 Z' fill='", gillsColor, "' />"
-            )
+            abi.encodePacked("<path d='M20 40 L44 40 L32 56 Z' fill='", gillsColor, "' />")
         );
     }
 
-    // SVG for Traits
     function traitsSvg(MushroomData memory data) private pure returns (string memory) {
         string memory traits;
         for (uint i = 0; i < MAX_TRAITS; i++) {
@@ -155,7 +149,6 @@ contract MushroomGenerator is Generator {
         return traits;
     }
 
-    // SVG for Accessories
     function accessoriesSvg(MushroomData memory data) private pure returns (string memory) {
         string memory accessorySvg;
         for (uint i = 0; i < MAX_TRAITS; i++) {
@@ -175,5 +168,19 @@ contract MushroomGenerator is Generator {
             }
         }
         return accessorySvg;
+    }
+}
+
+// Fungi.sol
+
+contract Fungi is ERC20, ReentrancyGuard {
+    constructor() ERC20("Wild", "WILD") {
+        _mint(msg.sender, 1_420_000_000 * 10 ** decimals());
+    }
+
+    function generateMushroomSvg(uint seed, uint extraSeed) external view returns (string memory) {
+        SeedData memory seedData = SeedData(seed, extraSeed);
+        MushroomData memory data = MushroomGenerator(address(this)).getMushroom(seedData);
+        return MushroomGenerator(address(this)).getSvg(seedData);
     }
 }
