@@ -96,6 +96,10 @@ contract MushroomGenerator is Generator {
             );
         }
 
+        // Add the static overlay (frame.svg)
+        svg = string(abi.encodePacked(svg, frameSvg()));
+
+        // Add the mushroom components
         svg = string(
             abi.encodePacked(
                 svg,
@@ -109,6 +113,11 @@ contract MushroomGenerator is Generator {
         );
 
         return svg;
+    }
+
+    function frameSvg() private pure returns (string memory) {
+        // Reference your frame.svg file
+        return "<image href='assets/frame.svg' width='64' height='64' />";
     }
 
     function capLayerSvg(string memory shadows, string memory midtones, string memory highlights) private view returns (string memory) {
