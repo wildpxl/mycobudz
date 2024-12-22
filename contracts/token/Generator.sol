@@ -22,6 +22,7 @@ contract MushroomGenerator is Generator {
         string spotsColor;
         string ridgesColor;
         string gillsColor;
+        string frameOverlay; // Dynamic frame overlay
         uint[4] traits;
         bool[4] hasAccessories;
     }
@@ -33,11 +34,18 @@ contract MushroomGenerator is Generator {
     string[20] public capMidtonesPalette = ["#a05b53", "#e6482e", "#784a39", "#a0938e", "#b47d66", "#e1ae96", "#a38070", "#966c57", "#f47e1b", "#eea160", "#a58258", "#e1d6c7", "#bc9230", "#f4b41b", "#65695e", "#71aa34", "#5aad90", "#48877e", "#97bcbc", "#b6dee1"];
     string[20] public capHighlightsPalette = ["#bf7958", "#cb977f", "#f0e5d4", "#c3baac", "#cfc6b8", "#949691", "#788079", "#3e6253", "#244341", "#dff6f5", "#28ccdf", "#7596cb", "#4d5f96", "#394778", "#827094", "#e182a9", "#cd6093", "#ffaeb6", "#dff6f5", "#b6d53c"];
 
-    string[20] public bodyPalette = ["#a38070", "#966c57", "#5a3826", "#69442e", "#bca296", "#e1ae96", "#f0e5d4", "#c3baac", "#e1d6c7", "#cfc6b8", "#949691", "#3e6253", "#5aad90", "#48877e", "#97bcbc", "#8e478c", "#cd6093", "#e182a9", "#f4b41b", "#65695e"];
-
-    string[20] public ridgesPalette = ["#a58258", "#e1d6c7", "#f0e5d4", "#c3baac", "#cfc6b8", "#dff6f5", "#3e6253", "#575b58", "#949691", "#65695e", "#b6d53c", "#bc9230", "#f4b41b", "#ffcd55", "#b6dee1", "#97acda", "#7596cb", "#4d5f96", "#8e478c", "#e182a9"];
-
-    string[20] public gillsPalette = ["#333333", "#515151", "#6a6a6a", "#3e6253", "#244341", "#575b58", "#3c5956", "#5aad90", "#48877e", "#949691", "#65695e", "#dff6f5", "#97bcbc", "#6b8f8f", "#b6dee1", "#7596cb", "#4d5f96", "#17111e", "#827094", "#564064"];
+    string[10] public framePalette = [
+        "<image href='assets/frame1.svg' width='64' height='64' />",
+        "<image href='assets/frame2.svg' width='64' height='64' />",
+        "<image href='assets/frame3.svg' width='64' height='64' />",
+        "<image href='assets/frame4.svg' width='64' height='64' />",
+        "<image href='assets/frame5.svg' width='64' height='64' />",
+        "<image href='assets/frame6.svg' width='64' height='64' />",
+        "<image href='assets/frame7.svg' width='64' height='64' />",
+        "<image href='assets/frame8.svg' width='64' height='64' />",
+        "<image href='assets/frame9.svg' width='64' height='64' />",
+        "<image href='assets/frame10.svg' width='64' height='64' />"
+    ];
 
     string[10] public levelOneBackgrounds = ["#f5f5f5", "#e4ded4", "#bcbcbc", "#ece8e1", "#dcd6cd", "#c3baac", "#f0e5d4", "#dff6f5", "#b6dee1", "#97bcbc"];
 
@@ -59,10 +67,9 @@ contract MushroomGenerator is Generator {
         data.capShadows = capShadowsPalette[rnd.next() % capShadowsPalette.length];
         data.capMidtones = capMidtonesPalette[rnd.next() % capMidtonesPalette.length];
         data.capHighlights = capHighlightsPalette[rnd.next() % capHighlightsPalette.length];
-        data.bodyColor = bodyPalette[rnd.next() % bodyPalette.length];
-        data.spotsColor = "#eaeaea"; // Fixed color
-        data.ridgesColor = ridgesPalette[rnd.next() % ridgesPalette.length];
-        data.gillsColor = gillsPalette[rnd.next() % gillsPalette.length];
+
+        // Assign frame overlay dynamically
+        data.frameOverlay = framePalette[rnd.next() % framePalette.length];
     }
 
     function setTraits(MushroomData memory data, Rand memory rnd) private pure {
@@ -109,8 +116,8 @@ contract MushroomGenerator is Generator {
             );
         }
 
-        // Add the static overlay (frame.svg)
-        svg = string(abi.encodePacked(svg, frameSvg()));
+        // Add the dynamic overlay (frame.svg)
+        svg = string(abi.encodePacked(svg, data.frameOverlay));
 
         // Add the mushroom components
         svg = string(
@@ -130,7 +137,7 @@ contract MushroomGenerator is Generator {
                 svg,
                 "<text x='8' y='12' font-size='8' fill='black' text-anchor='middle'>", data.traits[0].toString(), "</text>", // Top-left
                 "<text x='56' y='12' font-size='8' fill='black' text-anchor='middle'>", data.traits[1].toString(), "</text>", // Top-right
-                "<text x='8' y='60' font-size='8' fill='black' text-anchor='middle'>", data.traits[2].toString(), "</text>", //
+                "<text x='8' y='60' font-size='8' fill='black' text-anchor='middle'>", data.traits[2].toString(), "</text>", // Bottom-left
                 "<text x='56' y='60' font-size='8' fill='black' text-anchor='middle'>", data.traits[3].toString(), "</text>"  // Bottom-right
             )
         );
@@ -139,47 +146,5 @@ contract MushroomGenerator is Generator {
         svg = string(abi.encodePacked(svg, "</svg>"));
 
         return svg;
-    }
-
-    function frameSvg() private pure returns (string memory) {
-        // Reference your frame.svg file
-        return "<image href='assets/frame.svg' width='64' height='64' />";
-    }
-
-    function capLayerSvg(string memory shadows, string memory midtones, string memory highlights) private pure returns (string memory) {
-        return string(
-            abi.encodePacked(
-                "<circle cx='32' cy='32' r='16' fill='", shadows, "' />",
-                "<circle cx='32' cy='32' r='14' fill='", midtones, "' />",
-                "<circle cx='32' cy='32' r='12' fill='", highlights, "' />"
-            )
-        );
-    }
-
-    function bodySvg(string memory bodyColor) private pure returns (string memory) {
-        return string(
-            abi.encodePacked("<rect x='26' y='40' width='12' height='20' fill='", bodyColor, "' />")
-        );
-    }
-
-    function spotsSvg(string memory spotsColor) private pure returns (string memory) {
-        return string(
-            abi.encodePacked(
-                "<circle cx='28' cy='30' r='2' fill='", spotsColor, "' />",
-                "<circle cx='36' cy='36' r='3' fill='", spotsColor, "' />"
-            )
-        );
-    }
-
-    function ridgesSvg(string memory ridgesColor) private pure returns (string memory) {
-        return string(
-            abi.encodePacked("<line x1='26' y1='42' x2='38' y2='42' stroke='", ridgesColor, "' stroke-width='2' />")
-        );
-    }
-
-    function gillsSvg(string memory gillsColor) private pure returns (string memory) {
-        return string(
-            abi.encodePacked("<path d='M20 40 L44 40 L32 56 Z' fill='", gillsColor, "' />")
-        );
     }
 }
