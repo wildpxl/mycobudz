@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./Erc20.sol";
 import "./Generator.sol";
 
-contract Fungi is ERC20, Generator, ReentrancyGuard {
-    constructor() ERC20("Fungi", "FUNGI") {
+contract Wild is ERC20, Generator, ReentrancyGuard {
+    constructor() ERC20("Wild", "WILD") {
         _mint(msg.sender, 1_000_000_000 * 10 ** decimals());
     }
 
