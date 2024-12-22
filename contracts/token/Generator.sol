@@ -29,10 +29,31 @@ contract MushroomGenerator is Generator {
 
     uint constant MAX_TRAITS = 4;
 
-    // Updated palettes
-    string[20] public capShadowsPalette = ["#5a5353", "#a93b3b", "#3c2420", "#694335", "#784a39", "#e6482e", "#9e6851", "#bf7958", "#cb977f", "#bca296", "#5a3826", "#69442e", "#8f6440", "#b48258", "#cfc6b8", "#949691", "#788079", "#3c5956", "#575b58", "#244341"];
-    string[20] public capMidtonesPalette = ["#a05b53", "#e6482e", "#784a39", "#a0938e", "#b47d66", "#e1ae96", "#a38070", "#966c57", "#f47e1b", "#eea160", "#a58258", "#e1d6c7", "#bc9230", "#f4b41b", "#65695e", "#71aa34", "#5aad90", "#48877e", "#97bcbc", "#b6dee1"];
-    string[20] public capHighlightsPalette = ["#bf7958", "#cb977f", "#f0e5d4", "#c3baac", "#cfc6b8", "#949691", "#788079", "#3e6253", "#244341", "#dff6f5", "#28ccdf", "#7596cb", "#4d5f96", "#394778", "#827094", "#e182a9", "#cd6093", "#ffaeb6", "#dff6f5", "#b6d53c"];
+    // Updated palettes with full color integration
+    string[34] public capShadowsPalette = [
+        "#5a5353", "#3c2420", "#5a3826", "#69442e", "#a93b3b", "#a05b53", 
+        "#694335", "#784a39", "#966c57", "#bf7958", "#b47d66", "#cb977f", 
+        "#bca296", "#949691", "#575b58", "#3e6253", "#3c5956", "#244341", 
+        "#5aad90", "#48877e", "#397b44", "#65695e", "#788079", "#4d5f96", 
+        "#394778", "#564064", "#5e3643", "#302c2e", "#000000", "#0f2d27", 
+        "#2d181d", "#17111e", "#3c2420", "#5a5353"
+    ];
+    string[34] public capMidtonesPalette = [
+        "#a93b3b", "#a05b53", "#bf7958", "#b47d66", "#cb977f", "#966c57", 
+        "#784a39", "#694335", "#e6482e", "#f47e1b", "#eea160", "#bc9230", 
+        "#f4b41b", "#a58258", "#a38070", "#a0938e", "#cfc6b8", "#e1d6c7", 
+        "#c3baac", "#bca296", "#b6d53c", "#71aa34", "#5aad90", "#48877e", 
+        "#6b8f8f", "#97bcbc", "#7596cb", "#97acda", "#827094", "#8e478c", 
+        "#cd6093", "#e182a9", "#7d7071", "#7a444a"
+    ];
+    string[34] public capHighlightsPalette = [
+        "#f47e1b", "#f4b41b", "#eea160", "#e1ae96", "#e6482e", "#bc9230", 
+        "#bf7958", "#b47d66", "#cb977f", "#f0e5d4", "#e1d6c7", "#cfc6b8", 
+        "#c3baac", "#dff6f5", "#b6dee1", "#28ccdf", "#7596cb", "#97acda", 
+        "#4d5f96", "#394778", "#564064", "#5e3643", "#cd6093", "#e182a9", 
+        "#827094", "#97bcbc", "#65695e", "#788079", "#949691", "#7d7071", 
+        "#7a444a", "#f0e5d4", "#b6d53c", "#71aa34"
+    ];
 
     string[10] public framePalette = [
         "<image href='assets/frame1.svg' width='64' height='64' />",
@@ -47,7 +68,10 @@ contract MushroomGenerator is Generator {
         "<image href='assets/frame10.svg' width='64' height='64' />"
     ];
 
-    string[10] public levelOneBackgrounds = ["#f5f5f5", "#e4ded4", "#bcbcbc", "#ece8e1", "#dcd6cd", "#c3baac", "#f0e5d4", "#dff6f5", "#b6dee1", "#97bcbc"];
+    string[10] public levelOneBackgrounds = [
+        "#f5f5f5", "#e4ded4", "#bcbcbc", "#ece8e1", "#dcd6cd", "#c3baac", 
+        "#f0e5d4", "#dff6f5", "#b6dee1", "#97bcbc"
+    ];
 
     MushroomGifStorage public gifStorage;
 
@@ -64,9 +88,17 @@ contract MushroomGenerator is Generator {
             data.background = "#ffffff"; // Default background for other levels
         }
 
-        data.capShadows = capShadowsPalette[rnd.next() % capShadowsPalette.length];
-        data.capMidtones = capMidtonesPalette[rnd.next() % capMidtonesPalette.length];
-        data.capHighlights = capHighlightsPalette[rnd.next() % capHighlightsPalette.length];
+        // Assign cap colors from palettes
+        uint paletteIndex = rnd.next() % capShadowsPalette.length;
+        data.capShadows = capShadowsPalette[paletteIndex];
+        data.capMidtones = capMidtonesPalette[paletteIndex];
+        data.capHighlights = capHighlightsPalette[paletteIndex];
+
+        // Use cap palettes for other components based on tonal alignment
+        data.bodyColor = capMidtonesPalette[paletteIndex];
+        data.spotsColor = capHighlightsPalette[paletteIndex];
+        data.ridgesColor = capShadowsPalette[paletteIndex];
+        data.gillsColor = capMidtonesPalette[paletteIndex];
 
         // Assign frame overlay dynamically
         data.frameOverlay = framePalette[rnd.next() % framePalette.length];
