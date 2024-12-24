@@ -101,28 +101,48 @@ contract MushroomGenerator is Generator {
     }
 
     function setColors(MushroomData memory data, Rand memory rnd) private view {
-        if (data.lvl == 1) {
-            data.background = levelOneBackgrounds[rnd.next() % levelOneBackgrounds.length];
-        } else if (data.lvl == 2) {
+    if (data.lvl == 1) {
+        data.background = levelOneBackgrounds[rnd.next() % levelOneBackgrounds.length];
+    } else if (data.lvl == 2) {
+        uint levelTwoIndex = rnd.next() % 3; // 0, 1, 2
+        if (levelTwoIndex == 0) {
             data.gifBackground = gifStorage.levelTwoGifBackground();
+        } else if (levelTwoIndex == 1) {
+            data.gifBackground = gifStorage.levelTwoGifBackground2();
         } else {
-            data.background = "#ffffff"; // Default background for other levels
+            data.gifBackground = gifStorage.levelTwoGifBackground3();
         }
-
-        uint[] memory weightedIndices = getWeightedIndices();
-        uint weightedIndex = weightedIndices[rnd.next() % weightedIndices.length];
-
-        data.capShadows = capShadowsPalette[weightedIndex];
-        data.capMidtones = capMidtonesPalette[weightedIndex];
-        data.capHighlights = capHighlightsPalette[weightedIndex];
-
-        data.bodyColor = capMidtonesPalette[(weightedIndex + 5) % 50];
-        data.spotsColor = capHighlightsPalette[(weightedIndex + 10) % 50];
-        data.ridgesColor = capShadowsPalette[(weightedIndex + 15) % 50];
-        data.gillsColor = capMidtonesPalette[(weightedIndex + 20) % 50];
-
-        data.frameOverlay = framePalette[rnd.next() % framePalette.length];
+    } else if (data.lvl == 3) {
+        uint levelThreeIndex = rnd.next() % 5; // 0 through 4
+        if (levelThreeIndex == 0) {
+            data.gifBackground = gifStorage.levelThreeGifBackground1();
+        } else if (levelThreeIndex == 1) {
+            data.gifBackground = gifStorage.levelThreeGifBackground2();
+        } else if (levelThreeIndex == 2) {
+            data.gifBackground = gifStorage.levelThreeGifBackground3();
+        } else if (levelThreeIndex == 3) {
+            data.gifBackground = gifStorage.levelThreeGifBackground4();
+        } else {
+            data.gifBackground = gifStorage.levelThreeGifBackground5();
+        }
+    } else {
+        data.background = "#ffffff"; // Default background for other levels
     }
+
+    uint[] memory weightedIndices = getWeightedIndices();
+    uint weightedIndex = weightedIndices[rnd.next() % weightedIndices.length];
+
+    data.capShadows = capShadowsPalette[weightedIndex];
+    data.capMidtones = capMidtonesPalette[weightedIndex];
+    data.capHighlights = capHighlightsPalette[weightedIndex];
+
+    data.bodyColor = capMidtonesPalette[(weightedIndex + 5) % 50];
+    data.spotsColor = capHighlightsPalette[(weightedIndex + 10) % 50];
+    data.ridgesColor = capShadowsPalette[(weightedIndex + 15) % 50];
+    data.gillsColor = capMidtonesPalette[(weightedIndex + 20) % 50];
+
+    data.frameOverlay = framePalette[rnd.next() % framePalette.length];
+}
 
     function setTraits(MushroomData memory data, Rand memory rnd) private pure {
         for (uint i = 0; i < MAX_TRAITS; i++) {
